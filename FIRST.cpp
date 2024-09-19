@@ -1,61 +1,50 @@
 ﻿#include <SDL.h>
+#include <iostream>
 
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
-
-SDL_Window* win = NULL;
-SDL_Surface* scr = NULL;
-SDL_Surface* smile = NULL;
-
-int init() {
+int main(int argc, char* argv[]) {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        std::cerr << "SDL_Init Error: " << SDL_GetError() << std::endl;
         return 1;
     }
 
-    win = SDL_CreateWindow("Main не резиновый", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-    if (win == NULL) {
+    SDL_Window* win = SDL_CreateWindow("Hello SDL", 100, 100, 640, 480, SDL_WINDOW_SHOWN);
+    if (win == nullptr) {
+        std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
+        SDL_Quit();
         return 1;
     }
 
-    scr = SDL_GetWindowSurface(win);
-
-    return 0;
-}
-
-int load() {
-    smile = SDL_LoadBMP("smile.bmp");
-
-    if (smile == NULL) {
+    SDL_Renderer* renderer = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (renderer == nullptr) {
+        std::cerr << "SDL_CreateRenderer Error: " << SDL_GetError() << std::endl;
+        SDL_DestroyWindow(win);
+        SDL_Quit();
         return 1;
     }
 
-    return 0;
-}
+    bool running = true;
+    SDL_Event event;
 
-void quit() {
-    SDL_FreeSurface(smile);
+    while (running) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                running = false;
+            }
+        }
 
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
+
+        SDL_Rect greenSquare = { 270, 190, 100, 100 };
+        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+        SDL_RenderFillRect(renderer, &greenSquare);
+
+        SDL_RenderPresent(renderer);
+    }
+
+    SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(win);
-
     SDL_Quit();
-}
-
-int main(int argc, char** args) {
-    if (init() == 1) {
-        return 1;
-    }
-
-    if (load() == 1) {
-        return 1;
-    }
-
-    SDL_BlitSurface(smile, NULL, scr, NULL);
-
-    SDL_UpdateWindowSurface(win);
-
-    SDL_Delay(2000);
-
-    quit();
 
     return 0;
-};
+}
