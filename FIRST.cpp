@@ -1,49 +1,55 @@
 ﻿#include <SDL.h>
+#include <SDL_image.h>
 #include <iostream>
 
-int main(int argc, char* argv[]) {
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        std::cerr << "SDL_Init Error: " << SDL_GetError() << std::endl;
-        return 1;
-    }
+int main(int argc, char* args[])
+{
+    SDL_Init(SDL_INIT_EVERYTHING);
+    IMG_Init(IMG_INIT_PNG);
 
-    SDL_Window* win = SDL_CreateWindow("Hello SDL", 100, 100, 640, 480, SDL_WINDOW_SHOWN);
-    if (win == nullptr) {
-        std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
-        SDL_Quit();
-        return 1;
-    }
+    SDL_Window* window = SDL_CreateWindow("Health bar", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600, SDL_WINDOW_SHOWN);
 
-    SDL_Renderer* renderer = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    if (renderer == nullptr) {
-        std::cerr << "SDL_CreateRenderer Error: " << SDL_GetError() << std::endl;
-        SDL_DestroyWindow(win);
-        SDL_Quit();
-        return 1;
-    }
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    SDL_Surface* healthbar_sur = IMG_Load("healthbar.png");
+    SDL_Texture* healthbar_tex = SDL_CreateTextureFromSurface(renderer, healthbar_sur);
 
-    bool running = true;
-    SDL_Event event;
+    SDL_Rect rect{ 100, 100, 200, 22 };
 
-    while (running) {
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                running = false;
+    int x = 0; // x position of the mouse
+
+    while (true) {
+        SDL_Event e;
+        if (SDL_WaitEvent(&e)) {
+            if (e.type == SDL_QUIT) {
+                break;
+            }
+            if (e.type == SDL_MOUSEMOTION) {
+                x = e.motion.x;
+
+                if (x < 196)
+                    x = 196;
+
+                if (x > 392)
+                    x = 392;
             }
         }
+        SDL_Rect rect2{ 102, 102, (x - 196), 18 };
 
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
 
-        SDL_Rect greenSquare = { 270, 190, 100, 100 };
-        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-        SDL_RenderFillRect(renderer, &greenSquare);
+        SDL_RenderCopy(renderer, healthbar_tex, NULL, &rect);
+
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        SDL_RenderFillRect(renderer, &rect2);
 
         SDL_RenderPresent(renderer);
     }
 
+    SDL_DestroyTexture(healthbar_tex);
     SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(win);
+    SDL_DestroyWindow(window);
+    IMG_Quit();
     SDL_Quit();
 
     return 0;
